@@ -83,6 +83,12 @@ _parser.add_argument('--UPGrad_norm_eps', type=float, default=0.0001,
                      help='A small value to avoid division by zero when normalizing.')
 _parser.add_argument('--UPGrad_reg_eps', type=float, default=0.0001,
                      help='A small value to add to the diagonal of the gramian to make it positive definite.')
+## PCD
+_parser.add_argument('--PCD_tau', type=float, nargs='+', default=[0.02],
+                     help='tolerance of PCD: one value for all auxiliary tasks or one per auxiliary task')
+_parser.add_argument('--PCD_primary', type=str, default=None,
+                     help='primary task of PCD (task name or index), default: the first task')
+_parser.add_argument('--PCD_beta', type=float, default=0.999, help='EMA decay of the gradient normalization in PCD')
 
 #### bilevel methods
 _parser.add_argument('--outer_lr', type=float, default=1e-3, help='outer lr')
@@ -112,7 +118,8 @@ def prepare_args(params):
     if params.weighting in ['EW', 'UW', 'GradNorm', 'GLS', 'RLW', 'MGDA', 'IMTL',
                             'PCGrad', 'GradVac', 'CAGrad', 'GradDrop', 'DWA', 
                             'Nash_MTL', 'MoCo', 'Aligned_MTL', 'DB_MTL', 'STCH', 
-                            'ExcessMTL', 'FairGrad', 'FAMO', 'MoDo', 'SDMGrad', 'UPGrad']:
+                            'ExcessMTL', 'FairGrad', 'FAMO', 'MoDo', 'SDMGrad', 'UPGrad',
+                            'PCD']:
         if params.weighting in ['DWA']:
             if params.T is not None:
                 kwargs['weight_args']['T'] = params.T
@@ -183,6 +190,10 @@ def prepare_args(params):
         elif params.weighting in ['UPGrad']:
             kwargs['weight_args']['UPGrad_norm_eps'] = params.UPGrad_norm_eps
             kwargs['weight_args']['UPGrad_reg_eps'] = params.UPGrad_reg_eps
+        elif params.weighting in ['PCD']:
+            kwargs['weight_args']['PCD_tau'] = params.PCD_tau[0] if len(params.PCD_tau) == 1 else params.PCD_tau
+            kwargs['weight_args']['PCD_primary'] = params.PCD_primary
+            kwargs['weight_args']['PCD_beta'] = params.PCD_beta
     elif params.weighting in ['MOML', 'FORUM', 'AutoLambda']:
         kwargs['weight_args']['outer_lr'] = params.outer_lr
         kwargs['weight_args']['inner_step'] = params.inner_step
